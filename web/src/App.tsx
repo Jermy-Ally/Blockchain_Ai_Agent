@@ -55,10 +55,17 @@ function App() {
     setDebugLogs(prev => [...prev.slice(-9), logMessage]); // Keep last 10 logs
   };
 
+  const getApiBase = () => {
+    // Prefer explicit env var; fall back to localhost only in dev
+    const raw = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+    return raw.replace(/\/$/, '');
+  };
+
   useEffect(() => {
     // Log initial connection attempt
+    const apiBase = getApiBase();
     addDebugLog('App mounted, attempting to fetch status...');
-    addDebugLog(`Backend URL: ${import.meta.env.VITE_API_URL || '/api'}`);
+    addDebugLog(`Backend URL: ${apiBase || '(not set)'}`);
     addDebugLog(`Current URL: ${window.location.href}`);
     
     const fetch = async () => {
@@ -68,7 +75,7 @@ function App() {
     
     const interval = setInterval(() => {
       addDebugLog('Auto-refreshing status...');
-    fetchStatus();
+      fetchStatus();
     }, 10000); // Refresh every 10 seconds
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,75 +87,48 @@ function App() {
     
     addDebugLog('=== Starting fetchStatus ===');
     
+    const apiBase = getApiBase();
+    if (!apiBase) {
+      const msg = 'VITE_API_URL is not set; cannot reach backend in production.';
+      addDebugLog(`❌ ${msg}`);
+      setError(msg);
+      setConnectionStatus('❌ Connection failed');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Try proxy first
-      const apiUrl = import.meta.env.VITE_API_URL || '/api';
-      const proxyUrl = `${apiUrl}/status`;
-      addDebugLog(`Attempt 1: Trying proxy URL: ${proxyUrl}`);
-      setConnectionStatus(`Trying proxy: ${proxyUrl}`);
+      const url = `${apiBase}/status`;
+      addDebugLog(`Attempt: GET ${url}`);
+      setConnectionStatus(`Connecting: ${url}`);
       
-      const response = await fetch(proxyUrl, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
         },
       });
       
-      addDebugLog(`Proxy response: ${response.status} ${response.statusText}`);
+      addDebugLog(`Response: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
         const text = await response.text();
-        addDebugLog(`❌ Proxy error: ${response.status} - ${text.substring(0, 100)}`);
-        throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+        addDebugLog(`❌ Error body: ${text.substring(0, 200)}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      addDebugLog('✅ Proxy success! Data received');
+      addDebugLog('✅ Success! Data received');
       setStatus(data);
       setLoading(false);
-      setConnectionStatus('✅ Connected via proxy');
+      setConnectionStatus('✅ Connected');
       setError(null);
       return;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      addDebugLog(`❌ Proxy failed: ${errorMsg}`);
-      setConnectionStatus('❌ Proxy failed, trying direct connection...');
-      
-      // Try direct backend URL as fallback
-      try {
-        const directUrl = 'http://localhost:3000/status';
-        addDebugLog(`Attempt 2: Trying direct URL: ${directUrl}`);
-        setConnectionStatus(`Trying direct: ${directUrl}`);
-        
-        const directResponse = await fetch(directUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-        });
-        
-        addDebugLog(`Direct response: ${directResponse.status} ${directResponse.statusText}`);
-        
-        if (directResponse.ok) {
-          const data = await directResponse.json();
-          addDebugLog('✅ Direct success! Data received');
-          setStatus(data);
-          setLoading(false);
-          setConnectionStatus('✅ Connected via direct backend');
-          setError(null);
-          return;
-        } else {
-          const text = await directResponse.text();
-          addDebugLog(`❌ Direct error: ${directResponse.status} - ${text.substring(0, 100)}`);
-          throw new Error(`Direct connection failed: ${directResponse.status}, body: ${text}`);
-        }
-      } catch (directError) {
-        const directErrorMsg = directError instanceof Error ? directError.message : 'Unknown error';
-        addDebugLog(`❌ Direct connection failed: ${directErrorMsg}`);
-        const fullError = `Proxy: ${errorMsg} | Direct: ${directErrorMsg}`;
-        setError(fullError);
-        setConnectionStatus('❌ Connection failed');
+      addDebugLog(`❌ Fetch failed: ${errorMsg}`);
+      setError(errorMsg);
+      setConnectionStatus('❌ Connection failed');
       setLoading(false);
-      }
     }
   };
 
@@ -159,8 +139,11 @@ function App() {
     setServiceResult(null); // Clear previous result
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '/api';
-      const response = await fetch(`${apiUrl}/service`, {
+      const apiBase = getApiBase();
+      if (!apiBase) {
+        throw new Error('VITE_API_URL is not set; cannot reach backend.');
+      }
+      const response = await fetch(`${apiBase}/service`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
