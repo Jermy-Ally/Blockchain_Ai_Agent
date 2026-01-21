@@ -26,7 +26,14 @@ app.use((req, res, next) => {
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  // Allow requested headers (needed for custom headers like `ngrok-skip-browser-warning`)
+  const requestedHeaders = req.headers['access-control-request-headers'];
+  res.header(
+    'Access-Control-Allow-Headers',
+    typeof requestedHeaders === 'string'
+      ? requestedHeaders
+      : 'Origin, X-Requested-With, Content-Type, Accept, ngrok-skip-browser-warning'
+  );
   res.header('Access-Control-Allow-Credentials', 'true');
   
   if (req.method === 'OPTIONS') {
