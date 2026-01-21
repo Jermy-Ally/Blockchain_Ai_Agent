@@ -106,10 +106,21 @@ function App() {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true', // Bypass ngrok browser warning page
         },
       });
       
       addDebugLog(`Response: ${response.status} ${response.statusText}`);
+      addDebugLog(`Content-Type: ${response.headers.get('content-type')}`);
+      
+      // Check if response is actually JSON
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await response.text();
+        addDebugLog(`❌ Received ${contentType} instead of JSON`);
+        addDebugLog(`Response preview: ${text.substring(0, 200)}`);
+        throw new Error(`Backend returned HTML instead of JSON. Check if ngrok is showing a warning page or backend is not running.`);
+      }
       
       if (!response.ok) {
         const text = await response.text();
@@ -147,6 +158,7 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true', // Bypass ngrok browser warning page
         },
         body: JSON.stringify({
           serviceId: selectedService.id,
