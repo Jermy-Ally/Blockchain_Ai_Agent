@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blockchain AI Agent</title>
+    <script>
+      // Immediate console test - should appear even before React loads
+      console.log('📄 HTML loaded at:', new Date().toISOString());
+      console.log('🌐 Window location:', window.location.href);
+      console.log('✅ Console is working!');
+      
+      // Show a message if root element exists
+      window.addEventListener('DOMContentLoaded', function() {
+        console.log('📦 DOM Content Loaded');
+        const root = document.getElementById('root');
+        if (root) {
+          console.log('✅ Root element found');
+        } else {
+          console.error('❌ Root element NOT found!');
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <div style="padding: 20px; background: red; color: white;">
+        JavaScript is disabled! Please enable JavaScript to use this app.
+      </div>
+    </noscript>
+    <div id="root">
+      <div style="padding: 20px; font-family: Arial;">
+        <p>Loading React app...</p>
+        <p style="font-size: 12px; color: #666;">If you see this for more than 5 seconds, check the browser console (F12) for errors.</p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
