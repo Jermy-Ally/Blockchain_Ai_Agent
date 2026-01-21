@@ -639,7 +639,7 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>🤖 Blockchain AI Agent</h1>
+        <h1>Blockchain AI Agent</h1>
         <div className="status-indicator">
           <span className={`status-dot ${status.isRunning ? 'running' : 'stopped'}`}></span>
           <span>{status.isRunning ? 'Running' : 'Stopped'}</span>
