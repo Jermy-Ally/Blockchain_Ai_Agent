@@ -10,9 +10,25 @@ app.use(express.json());
 
 // Enable CORS for frontend
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  const origin = req.headers.origin;
+  
+  // Allow localhost for dev
+  if (origin === 'http://localhost:5173') {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  // Allow Netlify domains (including previews)
+  else if (origin && typeof origin === 'string' && origin.includes('.netlify.app')) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  // Allow ngrok domains (for testing)
+  else if (origin && typeof origin === 'string' && origin.includes('ngrok')) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
   } else {
